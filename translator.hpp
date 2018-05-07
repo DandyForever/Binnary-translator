@@ -4,7 +4,7 @@
 
 #undef TRAN_CMD
 
-const int SIGNSIZE = 8;
+const int SIGNSIZE = 7;
 const int MAX_SIZE = 1024;
 const int HEADER_SIZE = 210;
 
@@ -12,7 +12,7 @@ size_t size_of_file (FILE* file);
 
 void translator::make_input_buffer ()
 {
-	FILE* input_file = fopen ("test.txt", "r");
+	FILE* input_file = fopen ("CPU_commands.txt", "r");
 	assert (input_file);
 
 	this -> input_size = size_of_file (input_file);
@@ -48,7 +48,7 @@ void translator::translate ()
 	this -> output_buffer += 10;
 	printf ("\n%d\n%d\n", (size_t) ((size_t)(this -> input_current) - (size_t)(this -> input_buffer)), this -> input_size);
 
-	while ((size_t) ((size_t)(this -> input_current) - (size_t)(this -> input_buffer)) < this -> input_size)
+	while ((size_t) ((size_t)(this -> input_current) - (size_t)(this -> input_buffer)) <= this -> input_size)
 	{
 		int temp = get_int ();
 		//printf ("%d\n", temp);
@@ -71,6 +71,7 @@ void translator::translate ()
 
 	this -> output_buffer -= 10;
 	this -> output_size = (size_t) ((size_t)this -> output_current - (size_t)this -> output_buffer);
+	//printf ("%d\n", this -> output_size);
 }
 
 void translator::make_output_file ()
@@ -106,7 +107,8 @@ int translator::get_int ()
 {
 	int temp = 0;
 	memcpy (&temp, this -> input_current, sizeof(int));
-	this -> input_current += sizeof(int) + 1;
+	this -> input_current += sizeof(int);
+	printf ("%d\n", temp);
 
 	return temp;
 }
