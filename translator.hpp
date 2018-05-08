@@ -5,7 +5,7 @@
 #undef TRAN_CMD
 
 const int SIGNSIZE = 7;
-const int MAX_SIZE = 1024;
+const int MAX_SIZE = 100000;
 const int HEADER_SIZE = 210;
 
 size_t size_of_file (FILE* file);
@@ -39,19 +39,14 @@ void translator::translate ()
 
 	this -> output_current = this -> output_buffer;
 
-	DW (0x8948)
-	DB (0xe5)
-	DW (0x8148)
-	DB (0xec)
-	DD (0x400)
+	DW (0x8948) DB (0xe5)			//mov rbp, rsp
+	DW (0x8148) DB (0xec) DD (0x400)	//sub rsp, 1024d
 
 	this -> output_buffer += 10;
-	printf ("\n%d\n%d\n", (size_t) ((size_t)(this -> input_current) - (size_t)(this -> input_buffer)), this -> input_size);
 
 	while ((size_t) ((size_t)(this -> input_current) - (size_t)(this -> input_buffer)) <= this -> input_size)
 	{
 		int temp = get_int ();
-		//printf ("%d\n", temp);
 
 		#define TRAN_CMD(number, command)\
 			case (number):\
@@ -71,7 +66,6 @@ void translator::translate ()
 
 	this -> output_buffer -= 10;
 	this -> output_size = (size_t) ((size_t)this -> output_current - (size_t)this -> output_buffer);
-	//printf ("%d\n", this -> output_size);
 }
 
 void translator::make_output_file ()
@@ -108,7 +102,6 @@ int translator::get_int ()
 	int temp = 0;
 	memcpy (&temp, this -> input_current, sizeof(int));
 	this -> input_current += sizeof(int);
-	printf ("%d\n", temp);
 
 	return temp;
 }

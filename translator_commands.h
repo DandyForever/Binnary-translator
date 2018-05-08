@@ -24,12 +24,16 @@
 
 #define JUMP(number)\
 	{\
-		int temp = GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer);\
-		DB (0x0f) DB (0x82 + number) DD (temp)\
-	}
+		DB (0x5b)\
+		DB (0x58)\
+		DB (0x48) DB (0x39) DB (0xd8)\
+		DB (0x0f) DB (0x82 + number) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 4)\
+	}//11
 
-TRAN_CMD(END, { DW (0x8148) DB (0xc5) DD (0x400)    
-		 DB (0xb8)   DD (0x3c) DW (0x3148) DB (0xff) DW (0x050f) }) //17
+TRAN_CMD(END, { 
+		DW (0x8148) DB (0xc5) DD (0x400)    
+		DB (0xb8)   DD (0x3c) DW (0x3148) DB (0xff) DW (0x050f) 
+		}) //17
 
 TRAN_CMD(OUT, { 							    //178
 		DB (0x58)
@@ -100,13 +104,35 @@ TRAN_CMD (PUSH, {
 		switch (mode)
 		{
 			case VAL:
-				DB (0x68) DD (GETINT)
+				DB (0x68) DD (GETINT) //5
 		
 				break;
+	
 			case REG:
-				DB (0x50 + GETINT)
+				DB (0x50 + GETINT) //1
 
-				break;		
+				break;	
+
+			case RAM:
+				DB (0x55)
+				DW (0x8148) DB (0xed) DD (GETINT * 8) //14
+				DD (0x458b48)
+				DB (0x5d)
+				DB (0x50)
+	
+				break;	
+			
+			case REGRAM:
+				DW (0x8948) DB (0xc0 + GETINT)//21
+				DB (0xba) DD (0x8)
+				DW (0xf748) DB (0xe2)
+				DB (0x55)
+				DW (0x2948) DB (0xc5)
+				DD (0x458b48)
+				DB (0x5d)
+				DB (0x50)
+
+				break;
 		}
 		})
 
@@ -116,9 +142,31 @@ TRAN_CMD (POP, {
 		switch (mode)
 		{
 			case REG:
-				DB (0x58 + GETINT)
+				DB (0x58 + GETINT) //1
 
 				break;
+			
+			case RAM:
+				DB (0x58)
+				DB (0x55)
+				DW (0x8148) DB (0xed) DD (GETINT * 8)//14
+				DD (0x458948)
+				DB (0x5d)
+
+				break;
+
+			case REGRAM:
+				DW (0x8948) DB (0xc0 + GETINT)//20
+				DB (0xbb) DD (0x8)
+				DB (0xf7) DB (0xe3)
+				DB (0x5b)
+				DB (0x55)
+				DW (0x2948) DB (0xc5)
+				DD (0x5d8948)
+				DB (0x5d)
+
+				break;
+				
 		}
 		})
 
@@ -183,7 +231,7 @@ TRAN_CMD (MUL, {		//8
 		DB (0x5b)
 		DB (0x58)
 		DB (0x52)
-		DW (0xf748) DB (0xe3)
+		DW (0xf748) DB (0xeb)
 		DB (0x5a)
 		DB (0x50)		
 		})
@@ -193,11 +241,20 @@ TRAN_CMD (DIV, {		//11
 		DB (0x58)
 		DB (0x52)
 		DW (0x3148) DB (0xd2)
-		DW (0xf748) DB (0xf3)
+		DW (0xf748) DB (0xfb)
 		DB (0x5a)
 		DB (0x50)		
 		})
 
-TRAN_CMD (JMP, {
-		DB (0xe9) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 5)
-		})
+TRAN_CMD (JMP, DB (0xe9) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 4))
+
+TRAN_CMD (JA , JUMP (0x5))
+TRAN_CMD (JB , JUMP (0x0))
+TRAN_CMD (JE , JUMP (0x2))
+TRAN_CMD (JAE, JUMP (0x1))
+TRAN_CMD (JBE, JUMP (0x4))
+TRAN_CMD (JNE, JUMP (0x3))
+
+TRAN_CMD (CALL, DB (0xe8) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 4))
+
+TRAN_CMD (REV, DB  (0xc3))//1
