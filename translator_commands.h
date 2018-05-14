@@ -43,7 +43,7 @@ TRAN_CMD(END, {								//17
 
 		})
 
-TRAN_CMD(OUT, { 							//178
+TRAN_CMD(OUT, { 							//194
 		DB (0x58)						//pop rax
 		
 		DB (0x53)						//push rbx
@@ -92,9 +92,17 @@ TRAN_CMD(OUT, { 							//178
 		DB (0x58)						//pop rax
 		DW (0x8348) DB (0xfb) DB (0x00)				//cmp rbx, 0d
 		DB (0x75) DB (0xc0)					//jne    400179 <_start.Nxt>
+		DW (0x8349) DW (0xf8)					//cmp r8, 0
+		DB (0x75) DB (0x0a)					//jne .prt
+		DB (0xb3) DB (0x30)					//mov byte bl, '0'
+		DB (0x88) DB (0x1f)					//mov byte [rdi], bl
+		DW (0xff48) DB (0xc7)					//inc rdi
+		DW (0xff48) DB (0xc1)					//inc rcx
+		
 		DB (0xb3) DB (0xa)					//mov byte bl, 0ah
 		DB (0x88) DB (0x1f)					//mov byte [rdi], bl
 		DW (0xff48) DB (0xc1)					//inc rcx
+
 		DB (0xb8) DD (0x1)					//mov rax, 1
 		DB (0xbf) DD (0x1)					//mov rdi, 1
 		DW (0xbe48) DQ (0x6000c2)				//mov rsi, buffer
@@ -244,11 +252,19 @@ TRAN_CMD (MUL, {							//8
 		DB (0x50)						//push rax
 		})
 
-TRAN_CMD (DIV, {							//11
+TRAN_CMD (DIV, {							//39
 		DB (0x5b)						//pop rbx
 		DB (0x58)						//pop rax
 		DB (0x52)						//push rdx
 		DW (0x3148) DB (0xd2)					//xor rdx, rdx
+		DW (0x8348) DB (0xf8) DB (0x00)				//cmp rax, 0
+		DB (0x7d) DB (0x16)					//jge .znak
+		DB (0xb9) DD (0x00)					//mov rcx, 0
+		DW (0x2948) DB (0xc1)					//sub rcx, rax
+		DW (0x8948) DB (0xc8)					//mov rax, rcx
+		DB (0xb9) DD (0x00)					//mov rcx, 0
+		DW (0x2948) DB (0xd9)					//sub rcx, rbx
+		DW (0x8948) DB (0xcb)					//mov rbx, rcx
 		DW (0xf748) DB (0xfb)					//idiv rbx
 		DB (0x5a)						//pop rdx
 		DB (0x50)						//push rax
@@ -256,13 +272,19 @@ TRAN_CMD (DIV, {							//11
 
 TRAN_CMD (JMP, DB (0xe9) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 4))							//jmp    40024e <_start.lol>
 
-TRAN_CMD (JA , JUMP (0x5))
-TRAN_CMD (JB , JUMP (0x0))
+TRAN_CMD (JA , JUMP (0xd))
+TRAN_CMD (JB , JUMP (0xa))
 TRAN_CMD (JE , JUMP (0x2))
-TRAN_CMD (JAE, JUMP (0x1))
-TRAN_CMD (JBE, JUMP (0x4))
+TRAN_CMD (JAE, JUMP (0xb))
+TRAN_CMD (JBE, JUMP (0xc))
 TRAN_CMD (JNE, JUMP (0x3))
 
 TRAN_CMD (CALL, DB (0xe8) DD (GETINT - (size_t)( this -> output_current) + (size_t) (this -> output_buffer) - 4))							//callq  4002a1 <_ff>
 
 TRAN_CMD (REV, DB  (0xc3))//1						//retq
+
+TRAN_CMD (SQRT, {							//8
+		DW (0x2cdf) DB (0x24)					//fild qword [rsp]
+		DW (0xfad9)						//fsqrt
+		DW (0x3cdf) DB (0x24)					//fistp qword [rsp]
+		})
